@@ -7,7 +7,7 @@
 <sup>1</sup>University of Oxford &nbsp;&nbsp; <sup>2</sup>UIUC &nbsp;&nbsp; <sup>3</sup>fal &nbsp;&nbsp; <sup>4</sup>EverEx <br>
 <sup>*</sup>*Equal contribution*
 
-[![Paper](svg)](pdf)
+[![Paper](https://img.shields.io/badge/arXiv-2606.17048-b31b1b.svg)](https://arxiv.org/pdf/2606.17048)
 
 Official Implementation of "Exact Posterior Score Estimation for Solving Linear Inverse Problems"
 
@@ -19,3 +19,12 @@ Official Implementation of "Exact Posterior Score Estimation for Solving Linear 
 If you find this work useful, please cite our paper:
 
 ```bibtex
+@misc{mammadov2026exactposteriorscoreestimation,
+      title={Exact Posterior Score Estimation for Solving Linear Inverse Problems}, 
+      author={Abbas Mammadov and Ozgur Kara and Kaan Oktay and Iskander Azangulov and Adil Kaan Akan and Hyungjin Chung and James Matthew Rehg and Yee Whye Teh},
+      year={2026},
+      eprint={2606.17048},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2606.17048}, 
+}
