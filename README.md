@@ -7,7 +7,7 @@
 <sup>1</sup>University of Oxford &nbsp;&nbsp; <sup>2</sup>UIUC &nbsp;&nbsp; <sup>3</sup>fal &nbsp;&nbsp; <sup>4</sup>EverEx <br>
 <sup>*</sup>*Equal contribution*
 
-[![Paper](https://img.shields.io/badge/arXiv-2606.17048-b31b1b.svg)](https://arxiv.org/pdf/2606.17048)
+[![Paper](https://img.shields.io/badge/arXiv-2606.17048-b31b1b.svg)](https://arxiv.org/pdf/2606.17048) [![Page](https://img.shields.io/badge/Project-Page-pink?logo=googlechrome&logoColor=white)](https://abbasmammadov.github.io/EPS/)
 
 Official Implementation of "Exact Posterior Score Estimation for Solving Linear Inverse Problems"
 
