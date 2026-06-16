@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="branded">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exact Posterior Score (EPS) — Solving Linear Inverse Problems</title>
+  <meta name="description"
+    content="Exact Posterior Score (EPS): the closed-form posterior score for linear inverse problems turns posterior sampling into denoising at a measurement-shifted pivot under an anisotropic covariance.">
+  <meta property="og:title" content="Exact Posterior Score (EPS)">
+  <meta property="og:description"
+    content="Posterior sampling for linear inverse problems is just denoising — at the right query geometry.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+  <nav class="site-nav" aria-label="Page navigation">
+    <a class="nav-brand" href="#top">EPS</a>
+    <div class="nav-links">
+      <a href="#abstract">Abstract</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#qualitative">Qualitative</a>
+      <a href="#citation">BibTeX</a>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <p class="hero-venue">Preprint · 2026</p>
+      <h1>Exact Posterior Score Estimation<br>for Solving Linear Inverse Problems</h1>
+      <p class="hero-tagline">
+        Posterior sampling is still just <em>denoising</em> — you only have to query the denoiser
+        at the right place, with the right noise geometry.
+      </p>
+
+      <p class="authors">
+        <a href="https://abbasmammadov.github.io/" target="_blank" rel="noopener">Abbas Mammadov</a><sup>1,*</sup> ·
+        <a href="https://karaozgur.com/" target="_blank" rel="noopener">Ozgur Kara</a><sup>2,*</sup> ·
+        <a href="https://scholar.google.com/citations?user=vzNWjhUAAAAJ&hl=en" target="_blank" rel="noopener">Kaan Oktay</a><sup>3</sup> ·
+        <a href="https://scholar.google.com/citations?user=Hg46lccAAAAJ&hl=en" target="_blank" rel="noopener">Iskander Azangulov</a><sup>1</sup> ·
+        <a href="https://kaanakan.github.io/" target="_blank" rel="noopener">Adil Kaan Akan</a><sup>3</sup> ·
+        <a href="https://hyungjin-chung.github.io/" target="_blank" rel="noopener">Hyungjin Chung</a><sup>4</sup> ·
+        <a href="https://rehg.org/" target="_blank" rel="noopener">James Matthew Rehg</a><sup>2</sup> ·
+        <a href="https://www.stats.ox.ac.uk/~teh/" target="_blank" rel="noopener">Yee Whye Teh</a><sup>1</sup>
+      </p>
+      <p class="affiliation">
+        <sup>1</sup>University of Oxford · <sup>2</sup>UIUC · <sup>3</sup>fal · <sup>4</sup>EverEx
+      </p>
+      <p class="eq-note"><sup>*</sup>Equal contribution</p>
+
+      <div class="links" aria-label="Project links">
+        <a class="btn btn-primary" href="https://arxiv.org/abs/2606.17048" target="_blank" rel="noopener">Paper · arXiv</a>
+        <a class="btn" href="https://arxiv.org/pdf/2606.17048" target="_blank" rel="noopener">PDF</a>
+        <a class="btn btn-code" href="https://github.com/abbasmammadov/EPS" target="_blank" rel="noopener" aria-label="Code on GitHub">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          Code
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============================ ABSTRACT ============================ -->
+    <section class="section" id="abstract">
+      <div class="section-heading">
+        <span class="kicker">Abstract</span>
+        <h2>Posterior sampling, exactly</h2>
+      </div>
+      <div class="prose">
+        <p>
+          Diffusion and flow models learn powerful data priors, but to solve a linear inverse problem
+          $y = A x_0 + \eta$ the reverse sampler needs the <strong>posterior</strong> score
+          $\nabla_{x_t}\log p(x_t\mid y)$, not the unconditional prior score the model provides.
+          Existing methods either steer a fixed denoiser with <em>approximate</em> measurement corrections,
+          or train a conditional model that abandons the denoising structure of the prior.
+        </p>
+        <p>
+          We derive the <strong>exact posterior score in closed form</strong> for linear Gaussian inverse
+          problems and show that posterior sampling reduces to a denoising problem at an operator-dependent
+          shifted pivot $\mu_\star$ under an anisotropic noise covariance $\Sigma_\star$. We turn this
+          identity into <strong>Exact Posterior Score (EPS)</strong>, a denoising objective that preserves
+          the input/output structure of standard pretraining — so it trains from scratch or fine-tunes
+          from a pretrained denoiser. At inference, EPS runs the backbone's own sampler unchanged, with no
+          likelihood gradients or projections, using roughly an order of magnitude fewer denoiser
+          evaluations than gradient-based posterior samplers.
+        </p>
+      </div>
+
+      <div class="highlights">
+        <div><strong>5</strong><span>linear inverse problems</span></div>
+        <div><strong>~20</strong><span>NFE to converge</span></div>
+        <div><strong>1.006×</strong><span>cost of the bare denoiser</span></div>
+        <div><strong>1</strong><span>NFE posterior-mean estimate</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ METHOD ============================ -->
+    <section class="section" id="method">
+      <div class="section-heading">
+        <span class="kicker">Method</span>
+        <h2>Denoising at the right query geometry</h2>
+        <p>
+          Instead of denoising an isotropic query at $x_t$, the measurement shifts the query to the
+          posterior pivot $\mu_\star$ and reshapes the noise into an anisotropic covariance $\Sigma_\star$:
+          measured directions become certain, unobserved directions stay uncertain. The same backbone
+          sampler runs unchanged.
+        </p>
+      </div>
+
+      <figure class="figure-hero">
+        <img src="assets/eps/eps_main.png"
+          alt="EPS turns posterior sampling into denoising. The measurement shifts the query from x_t to the pivot mu-star and reshapes isotropic noise into an anisotropic covariance Sigma-star.">
+        <figcaption>
+          <strong>EPS turns posterior sampling into denoising with the right query geometry.</strong>
+          A single high-noise evaluation returns the posterior mean $\mathbb{E}[x_0\mid y]$ (high PSNR, smooth);
+          continuing the sampler produces a sharp posterior sample.
+        </figcaption>
+      </figure>
+
+      <div class="eq-row">
+        <div class="eq-card">
+          <span class="eq-tag">Theorem 1 — exact posterior score</span>
+          <p>$$\nabla_{x_t}\log p(x_t\mid y)=\frac{1}{\beta_t^2}\Big(\alpha_t\,D_{\Sigma_\star}\!\big(\mu_\star\big)-x_t\Big)$$</p>
+        </div>
+        <div class="eq-card">
+          <span class="eq-tag">Pivot &amp; covariance</span>
+          <p>$$\Sigma_\star=\Big(\tfrac{\alpha_t^2}{\beta_t^2}I+\tfrac{1}{\sigma_y^2}A^\top A\Big)^{-1},\quad
+              \mu_\star=\Sigma_\star\Big(\tfrac{\alpha_t}{\beta_t^2}x_t+\tfrac{1}{\sigma_y^2}A^\top y\Big)$$</p>
+        </div>
+        <div class="eq-card eq-card-accent">
+          <span class="eq-tag">EPS training objective</span>
+          <p>$$\mathcal{L}_{\mathrm{EPS}}=\mathbb{E}\big[\,w(t)\,\|D_\theta(\mu_\star,y,t)-x_0\|^2\,\big]$$</p>
+        </div>
+      </div>
+
+      <p class="method-note">
+        The target stays a clean image $x_0$ and the loss stays squared error — only the input changes from
+        $x_t$ to the pivot $\mu_\star$. Training-free solvers (DPS, DDNM, $\Pi$GDM) instead query the network
+        at $x_t$ and approximate $D_{\Sigma_\star}(\mu_\star)$ with the unconditional denoiser $D_t(x_t)$;
+        that gap is exactly what EPS closes.
+      </p>
+    </section>
+
+    <!-- ============================ RESULTS ============================ -->
+    <section class="section" id="results">
+      <div class="section-heading">
+        <span class="kicker">Quantitative results</span>
+        <h2>Best on the majority of metrics, at a fraction of the budget</h2>
+        <p>
+          Five linear inverse problems on FFHQ-64 and ImageNet-64, every baseline under the same backbone and
+          protocol. EPS wins on pointwise fidelity, perceptual quality, and distributional calibration alike.
+        </p>
+      </div>
+
+      <div class="result-band" aria-label="Headline results">
+        <article>
+          <p>ImageNet · random inpaint · FID</p>
+          <strong>99.6 → 77.1</strong>
+          <span>vs. best zero-shot ($\Pi$GDM)</span>
+        </article>
+        <article>
+          <p>NFE to plateau</p>
+          <strong>~20</strong>
+          <span>baselines climb past 100</span>
+        </article>
+        <article>
+          <p>Sampling cost vs. bare EDM</p>
+          <strong>1.006×</strong>
+          <span>DPS / $\Pi$GDM ≈ 2.3×</span>
+        </article>
+        <article>
+          <p>1-NFE posterior mean · PSNR</p>
+          <strong>26.60 dB</strong>
+          <span>ImageNet random inpaint</span>
+        </article>
+      </div>
+
+      <figure class="figure-clean">
+        <img src="assets/eps/nfe_convergence.png"
+          alt="FID and CRPS versus sampler steps. EPS plateaus within about 20 NFE on every panel while DPS, DAPS, DDNM, PiGDM and MPGD keep improving out to 100 NFE without catching up.">
+        <figcaption>
+          <strong>EPS converges in ~20 NFE; baselines never catch up.</strong> Sampling-step sensitivity on random
+          inpainting and $4\times$ super-resolution, across ImageNet-64 and FFHQ-64.
+        </figcaption>
+      </figure>
+
+      <div class="table-toolbar">
+        <div class="seg" role="tablist" aria-label="Dataset">
+          <button class="seg-btn is-active" data-tab="imagenet" role="tab" aria-selected="true">ImageNet-64</button>
+          <button class="seg-btn" data-tab="ffhq" role="tab" aria-selected="false">FFHQ-64</button>
+        </div>
+      </div>
+
+      <div class="table-wrap" data-table="imagenet">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th class="ta-l">Task</th><th class="ta-l">Method</th><th>NFE</th>
+              <th>PSNR↑</th><th>SSIM↑</th><th>LPIPS↓</th><th>FID↓</th>
+              <th>MMD<sub>pix</sub>↓</th><th>MMD<sub>Inc</sub>↓</th><th>CRPS<sub>pix</sub>↓</th><th>CRPS<sub>Inc</sub>↓</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-imagenet"></tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap is-hidden" data-table="ffhq">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th class="ta-l">Task</th><th class="ta-l">Method</th><th>NFE</th>
+              <th>PSNR↑</th><th>SSIM↑</th><th>LPIPS↓</th><th>FID↓</th>
+              <th>MMD<sub>pix</sub>↓</th><th>MMD<sub>Inc</sub>↓</th><th>CRPS<sub>pix</sub>↓</th><th>CRPS<sub>Inc</sub>↓</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-ffhq"></tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        All five baselines and all metrics shown; EPS rows highlighted. Pointwise (PSNR, SSIM), perceptual
+        (LPIPS, FID), and distributional (MMD, CRPS in pixel &amp; Inception space) — scroll horizontally for
+        the full set. <strong>†</strong> The 1-NFE row is a single high-noise Tweedie call returning the
+        posterior mean $\mathbb{E}[x_0\mid y]$ — MMSE-optimal in pixel space, hence strong PSNR/SSIM.
+      </p>
+
+      <div class="runtime-card">
+        <h3>Wall-clock cost · ImageNet-64, NFE=100, B200 GPU</h3>
+        <table class="mini-table">
+          <thead><tr><th class="ta-l">Method</th><th>s / image</th><th>× EDM</th></tr></thead>
+          <tbody>
+            <tr><td class="ta-l muted">EDM (uncond., reference)</td><td>1.87</td><td>1.00×</td></tr>
+            <tr><td class="ta-l">DDNM</td><td>2.51</td><td>1.34×</td></tr>
+            <tr><td class="ta-l">MPGD</td><td>2.52</td><td>1.35×</td></tr>
+            <tr><td class="ta-l">DAPS</td><td>4.07</td><td>2.18×</td></tr>
+            <tr><td class="ta-l">DPS</td><td>4.28</td><td>2.29×</td></tr>
+            <tr><td class="ta-l">$\Pi$GDM</td><td>4.54</td><td>2.43×</td></tr>
+            <tr class="eps-row"><td class="ta-l"><strong>EPS (ours)</strong></td><td><strong>1.88</strong></td><td><strong>1.006×</strong></td></tr>
+          </tbody>
+        </table>
+        <p>EPS solves the inverse problem at essentially the cost of running the bare denoiser — no backward pass, no nested rollout.</p>
+      </div>
+    </section>
+
+    <!-- ============================ QUALITATIVE ============================ -->
+    <section class="section" id="qualitative">
+      <div class="section-heading">
+        <span class="kicker">Qualitative results</span>
+        <h2>Reconstructions across the five tasks</h2>
+        <p>
+          EPS keeps sharp prior structure while matching the observation: the pivot separates measured from
+          unmeasured directions, and $\Sigma_\star$ sets how much to denoise along each.
+        </p>
+      </div>
+
+      <figure class="figure-clean">
+        <img src="assets/eps/qualitative_main.png"
+          alt="Qualitative reconstructions across random inpainting, box inpainting, 4x super-resolution, Gaussian deblur and motion deblur, comparing DPS, DAPS, DDNM, PiGDM, MPGD, Palette and EPS. PSNR overlaid.">
+        <figcaption>Random inpainting, box inpainting, $4\times$ super-resolution, Gaussian deblur, motion deblur. PSNR overlaid.</figcaption>
+      </figure>
+
+      <div class="gallery-grid">
+        <figure class="figure-clean">
+          <img src="assets/eps/sampling_progression.png"
+            alt="Sampling progression of EPS from the posterior mean toward a posterior sample as NFE increases.">
+          <figcaption>The sampling path starts at the posterior mean $\mathbb{E}[x_0\mid y]$ and ends at a posterior sample.</figcaption>
+        </figure>
+        <figure class="figure-clean">
+          <img src="assets/eps/extreme_tasks.png"
+            alt="EPS on extreme degradations, varying the number of posterior samples.">
+          <figcaption>Robustness under extreme degradations (90% missing pixels, $16\times$ super-resolution).</figcaption>
+        </figure>
+      </div>
+
+      <figure class="figure-clean">
+        <img src="assets/eps/imagenet256.png"
+          alt="High-resolution ImageNet-256 reconstructions across the five inverse problems.">
+        <figcaption>EPS scales to ImageNet-$256{\times}256$ across all five tasks (Appendix).</figcaption>
+      </figure>
+
+      <p class="more-results">
+        For more results and ablations — the input-pivot analysis, zero-shot pivoting, warm-start
+        convergence, sampling-step sensitivity, amortization across operators, and ImageNet-$256$ scaling —
+        see <a href="https://arxiv.org/abs/2606.17048" target="_blank" rel="noopener">our paper</a>.
+      </p>
+    </section>
+
+    <!-- ============================ CITATION ============================ -->
+    <section class="section citation-section" id="citation">
+      <div class="section-heading">
+        <span class="kicker">Cite</span>
+        <h2>BibTeX</h2>
+      </div>
+      <div class="cite-card">
+        <button class="copy-btn" id="copy-bib" aria-label="Copy BibTeX">Copy</button>
+        <pre><code id="bibtex">@misc{mammadov2026exactposteriorscoreestimation,
+      title={Exact Posterior Score Estimation for Solving Linear Inverse Problems},
+      author={Abbas Mammadov and Ozgur Kara and Kaan Oktay and Iskander Azangulov and Adil Kaan Akan and Hyungjin Chung and James Matthew Rehg and Yee Whye Teh},
+      year={2026},
+      eprint={2606.17048},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2606.17048},
+}</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>University of Oxford · UIUC · fal · EverEx — 2026</span>
+    <span class="footer-tagline">Posterior sampling is denoising at the right query geometry.</span>
+  </footer>
+
+  <script>
+    // ---- results tables (full data transcribed from the paper) ----
+    const TASKS = ['Inpaint (random)', 'Inpaint (box)', 'Super-res (4×)', 'Gaussian deblur', 'Motion deblur'];
+    // [method, nfe, psnr, ssim, lpips, fid, mmdPix, mmdInc, crpsPix, crpsInc, isEps?]
+    const IMAGENET = {
+      'Inpaint (random)': [
+        ['DPS', 250, 21.56, 0.6573, 0.2158, 183.94, '-4.88e-03', '2.51e-02', 5.88, 9.89],
+        ['DAPS', 100, 20.89, 0.5555, 0.3168, 224.39, '-2.22e-03', '4.94e-02', 6.91, 12.09],
+        ['DDNM', 100, 22.63, 0.7127, 0.1758, 138.53, '-5.78e-03', '7.29e-03', 5.23, 7.99],
+        ['$\\Pi$GDM', 100, 23.95, 0.7780, 0.1198, 99.60, '-6.40e-03', '-2.22e-03', 4.54, 6.32],
+        ['MPGD', 100, 19.62, 0.5447, 0.3151, 223.43, '2.56e-03', '4.92e-02', 7.81, 11.94],
+        ['Palette', 100, 24.09, 0.7869, 0.1011, 81.88, '-6.50e-03', '-4.41e-03', 4.16, 5.52],
+        ['EPS (ours)', 100, 24.34, 0.7948, 0.0979, 79.60, '-6.52e-03', '-4.51e-03', 4.04, 5.41, true],
+        ['EPS (ours)', 20, 24.87, 0.8122, 0.0910, 77.06, '-6.52e-03', '-4.51e-03', 4.02, 5.44, true],
+        ['EPS (ours)†', 1, 26.60, 0.8580, 0.0933, 88.59, '-6.15e-03', '-4.84e-04', 4.98, 8.32, true],
+      ],
+      'Inpaint (box)': [
+        ['DPS', 250, 19.44, 0.6587, 0.1891, 142.05, '-5.63e-03', '1.01e-02', 7.25, 8.19],
+        ['DAPS', 100, 20.62, 0.6600, 0.2100, 161.62, '-5.00e-03', '2.38e-02', 7.36, 9.57],
+        ['DDNM', 100, 20.38, 0.7049, 0.1824, 125.82, '-5.37e-03', '4.18e-03', 7.00, 7.54],
+        ['$\\Pi$GDM', 100, 20.53, 0.7292, 0.1490, 104.50, '-5.87e-03', '-2.69e-03', 6.59, 6.50],
+        ['MPGD', 100, 19.35, 0.6467, 0.2463, 167.19, '-3.44e-03', '1.93e-02', 8.67, 9.68],
+        ['Palette', 100, 21.12, 0.7541, 0.1218, 92.73, '-6.10e-03', '-4.12e-03', 5.92, 5.93],
+        ['EPS (ours)', 100, 21.24, 0.7569, 0.1196, 91.07, '-6.11e-03', '-4.23e-03', 5.87, 5.84, true],
+        ['EPS (ours)', 20, 21.72, 0.7667, 0.1166, 90.12, '-6.08e-03', '-4.14e-03', 5.86, 5.90, true],
+        ['EPS (ours)†', 1, 23.60, 0.7908, 0.1514, 129.11, '-5.60e-03', '7.34e-03', 7.16, 10.38, true],
+      ],
+      'Super-res (4×)': [
+        ['DPS', 250, 19.59, 0.4511, 0.3367, 200.98, '-5.06e-03', '2.67e-02', 7.77, 10.36],
+        ['DAPS', 100, 18.46, 0.3324, 0.4772, 258.25, '6.09e-03', '8.54e-02', 10.01, 12.52],
+        ['DDNM', 100, 21.10, 0.5523, 0.3055, 169.94, '-5.10e-03', '1.41e-02', 7.32, 9.74],
+        ['$\\Pi$GDM', 100, 20.25, 0.5318, 0.2499, 144.36, '-5.78e-03', '4.61e-03', 6.76, 8.05],
+        ['MPGD', 100, 20.57, 0.5103, 0.3426, 221.50, '-3.20e-03', '6.97e-02', 9.02, 13.08],
+        ['Palette', 100, 20.24, 0.5364, 0.2220, 128.76, '-5.86e-03', '-2.79e-03', 6.50, 7.33],
+        ['EPS (ours)', 100, 20.25, 0.5369, 0.2207, 128.80, '-5.86e-03', '-2.84e-03', 6.52, 7.35, true],
+        ['EPS (ours)', 20, 20.90, 0.5692, 0.2127, 129.13, '-5.72e-03', '-1.98e-03', 6.51, 7.54, true],
+        ['EPS (ours)†', 1, 22.78, 0.6530, 0.2455, 182.92, '-4.97e-03', '1.98e-02', 8.06, 13.47, true],
+      ],
+      'Gaussian deblur': [
+        ['DPS', 250, 25.05, 0.7804, 0.1511, 158.46, '-5.24e-03', '1.57e-02', 4.48, 8.96],
+        ['DAPS', 100, 25.97, 0.7680, 0.1466, 152.47, '-6.50e-03', '2.78e-02', 3.69, 9.58],
+        ['DDNM', 100, 26.28, 0.7903, 0.1227, 101.61, '-6.71e-03', '9.01e-03', 2.92, 7.18],
+        ['$\\Pi$GDM', 100, 28.13, 0.8785, 0.0742, 66.10, '-6.70e-03', '-2.49e-03', 2.91, 5.68],
+        ['MPGD', 100, 20.74, 0.6375, 0.2396, 175.42, '2.24e-02', '2.13e-02', 8.01, 10.20],
+        ['Palette', 100, 29.15, 0.9010, 0.0491, 46.62, '-6.83e-03', '-5.56e-03', 2.26, 4.11],
+        ['EPS (ours)', 100, 29.18, 0.9015, 0.0486, 46.55, '-6.83e-03', '-5.55e-03', 2.25, 4.11, true],
+        ['EPS (ours)', 20, 29.68, 0.9108, 0.0449, 44.25, '-6.83e-03', '-5.55e-03', 2.24, 4.13, true],
+        ['EPS (ours)†', 1, 28.82, 0.9194, 0.0606, 56.53, '-5.14e-03', '-3.46e-03', 4.09, 7.73, true],
+      ],
+      'Motion deblur': [
+        ['DPS', 250, 25.63, 0.7981, 0.1398, 162.66, '-6.41e-03', '2.58e-02', 4.42, 9.82],
+        ['DAPS', 100, 24.07, 0.6859, 0.1863, 190.39, '-6.06e-03', '3.99e-02', 4.68, 11.19],
+        ['DDNM', 100, 25.73, 0.7758, 0.1299, 109.80, '-6.68e-03', '7.60e-03', 3.16, 7.21],
+        ['$\\Pi$GDM', 100, 25.89, 0.8205, 0.1031, 93.75, '-6.46e-03', '-6.33e-04', 3.72, 6.63],
+        ['MPGD', 100, 25.90, 0.8114, 0.1525, 183.11, '-6.09e-03', '3.34e-02', 5.28, 12.49],
+        ['Palette', 100, 27.02, 0.8582, 0.0680, 62.86, '-6.73e-03', '-5.02e-03', 2.93, 4.81],
+        ['EPS (ours)', 100, 27.62, 0.8661, 0.0647, 61.29, '-6.77e-03', '-5.11e-03', 2.69, 4.70, true],
+        ['EPS (ours)', 20, 28.17, 0.8791, 0.0606, 59.11, '-6.77e-03', '-5.05e-03', 2.69, 4.76, true],
+        ['EPS (ours)†', 1, 26.56, 0.8613, 0.1079, 97.59, '-6.03e-03', '-7.30e-04', 5.25, 9.91, true],
+      ],
+    };
+    const FFHQ = {
+      'Inpaint (random)': [
+        ['DPS', 250, 23.09, 0.8003, 0.1080, 70.27, '-6.04e-03', '3.00e-02', 4.56, 6.33],
+        ['DAPS', 100, 22.45, 0.7576, 0.1519, 83.31, '-4.74e-03', '4.95e-02', 5.47, 7.52],
+        ['DDNM', 100, 24.50, 0.8566, 0.0766, 45.40, '-6.44e-03', '4.88e-04', 4.03, 4.87],
+        ['$\\Pi$GDM', 100, 26.00, 0.8898, 0.0556, 35.17, '-6.69e-03', '-3.83e-03', 3.44, 4.12],
+        ['MPGD', 100, 20.60, 0.7097, 0.1755, 102.37, '-1.67e-03', '7.62e-02', 6.29, 8.05],
+        ['Palette', 100, 25.76, 0.8809, 0.0593, 33.30, '-6.71e-03', '-4.76e-03', 3.31, 3.87],
+        ['EPS (ours)', 100, 26.16, 0.8879, 0.0533, 31.87, '-6.74e-03', '-5.00e-03', 3.16, 3.75, true],
+        ['EPS (ours)', 20, 26.75, 0.9006, 0.0489, 31.56, '-6.74e-03', '-3.94e-03', 3.15, 3.89, true],
+        ['EPS (ours)†', 1, 27.90, 0.9148, 0.0549, 39.71, '-6.63e-03', '2.18e-03', 3.94, 5.75, true],
+      ],
+      'Inpaint (box)': [
+        ['DPS', 250, 22.33, 0.7692, 0.0946, 41.58, '-6.30e-03', '5.29e-03', 5.09, 5.08],
+        ['DAPS', 100, 23.06, 0.7968, 0.0900, 39.35, '-6.01e-03', '6.47e-03', 5.09, 5.00],
+        ['DDNM', 100, 23.15, 0.8231, 0.0737, 28.75, '-6.20e-03', '-4.28e-03', 4.82, 4.03],
+        ['$\\Pi$GDM', 100, 23.80, 0.8359, 0.0623, 26.81, '-6.51e-03', '-4.33e-03', 4.36, 3.78],
+        ['MPGD', 100, 20.39, 0.7211, 0.1229, 49.51, '-4.55e-03', '9.16e-03', 6.98, 6.00],
+        ['Palette', 100, 24.18, 0.8426, 0.0577, 25.09, '-6.58e-03', '-5.30e-03', 4.02, 3.47],
+        ['EPS (ours)', 100, 24.23, 0.8448, 0.0567, 24.74, '-6.59e-03', '-5.35e-03', 4.01, 3.45, true],
+        ['EPS (ours)', 20, 24.70, 0.8560, 0.0536, 24.45, '-6.59e-03', '-4.77e-03', 3.99, 3.55, true],
+        ['EPS (ours)†', 1, 26.01, 0.8706, 0.0644, 32.90, '-6.36e-03', '-8.49e-04', 5.05, 5.62, true],
+      ],
+      'Super-res (4×)': [
+        ['DPS', 250, 20.43, 0.5968, 0.2162, 90.79, '-5.71e-03', '4.85e-02', 6.62, 7.69],
+        ['DAPS', 100, 18.87, 0.5112, 0.2658, 110.31, '-1.81e-03', '1.15e-01', 8.28, 9.35],
+        ['DDNM', 100, 22.35, 0.7201, 0.1592, 62.67, '-6.06e-03', '1.90e-02', 5.79, 6.63],
+        ['$\\Pi$GDM', 100, 22.02, 0.7242, 0.1281, 50.92, '-6.28e-03', '-1.23e-03', 5.39, 5.48],
+        ['MPGD', 100, 20.49, 0.5809, 0.2496, 120.27, '-4.69e-03', '1.05e-01', 7.59, 9.29],
+        ['Palette', 100, 21.95, 0.7220, 0.1273, 49.28, '-6.29e-03', '-2.98e-03', 5.22, 5.29],
+        ['EPS (ours)', 100, 21.96, 0.7232, 0.1262, 49.29, '-6.30e-03', '-3.00e-03', 5.23, 5.30, true],
+        ['EPS (ours)', 20, 22.56, 0.7480, 0.1188, 50.11, '-6.24e-03', '1.01e-03', 5.24, 5.50, true],
+        ['EPS (ours)†', 1, 24.21, 0.7999, 0.1265, 77.97, '-5.63e-03', '4.09e-02', 6.57, 9.27, true],
+      ],
+      'Gaussian deblur': [
+        ['DPS', 250, 25.89, 0.8530, 0.0901, 68.78, '-5.78e-03', '2.85e-02', 3.75, 6.40],
+        ['DAPS', 100, 27.32, 0.8494, 0.0771, 68.96, '-6.80e-03', '5.00e-02', 2.75, 6.89],
+        ['DDNM', 100, 31.27, 0.9454, 0.0273, 20.96, '-6.91e-03', '-5.45e-03', 1.87, 3.15],
+        ['$\\Pi$GDM', 100, 30.18, 0.9332, 0.0339, 27.30, '-6.85e-03', '-8.48e-04', 2.26, 3.86],
+        ['MPGD', 100, 19.88, 0.6716, 0.1770, 83.31, '2.72e-02', '5.93e-02', 7.59, 7.84],
+        ['Palette', 100, 30.47, 0.9397, 0.0286, 21.63, '-6.90e-03', '-5.65e-03', 1.91, 3.06],
+        ['EPS (ours)', 100, 30.82, 0.9408, 0.0273, 20.68, '-6.91e-03', '-5.73e-03', 1.84, 2.99, true],
+        ['EPS (ours)', 20, 31.47, 0.9488, 0.0249, 20.36, '-6.91e-03', '-4.97e-03', 1.84, 3.13, true],
+        ['EPS (ours)†', 1, 30.86, 0.9503, 0.0369, 31.39, '-6.62e-03', '2.35e-03', 3.21, 6.15, true],
+      ],
+      'Motion deblur': [
+        ['DPS', 250, 27.85, 0.8694, 0.0752, 70.24, '-6.76e-03', '4.68e-02', 3.29, 7.20],
+        ['DAPS', 100, 27.18, 0.8703, 0.0732, 53.53, '-6.70e-03', '1.85e-02', 3.12, 5.92],
+        ['DDNM', 100, 30.96, 0.9411, 0.0297, 22.06, '-6.91e-03', '-5.32e-03', 1.93, 3.23],
+        ['$\\Pi$GDM', 100, 25.04, 0.8529, 0.0940, 54.68, '-6.23e-03', '1.24e-02', 4.10, 5.49],
+        ['MPGD', 100, 27.53, 0.8764, 0.0746, 77.02, '-6.63e-03', '5.17e-02', 3.62, 7.63],
+        ['Palette', 100, 27.79, 0.9099, 0.0404, 28.23, '-6.77e-03', '-4.98e-03', 2.67, 3.59],
+        ['EPS (ours)', 100, 30.27, 0.9339, 0.0311, 23.10, '-6.90e-03', '-5.39e-03', 1.94, 3.18, true],
+        ['EPS (ours)', 20, 30.88, 0.9422, 0.0285, 22.79, '-6.91e-03', '-4.44e-03', 1.94, 3.32, true],
+        ['EPS (ours)†', 1, 27.73, 0.9078, 0.0669, 49.55, '-6.31e-03', '1.21e-02', 4.60, 7.76, true],
+      ],
+    };
+
+    function fmt(v, dec) { return Number(v).toFixed(dec); }
+    function buildTable(data, tbodyId) {
+      const tb = document.getElementById(tbodyId);
+      let html = '';
+      TASKS.forEach(task => {
+        const rows = data[task];
+        rows.forEach((r, i) => {
+          const [method, nfe, psnr, ssim, lpips, fid, mmdPix, mmdInc, crpsPix, crpsInc, isEps] = r;
+          html += `<tr class="${isEps ? 'eps-row' : ''}">`;
+          if (i === 0) html += `<td class="ta-l task-cell" rowspan="${rows.length}">${task}</td>`;
+          html += `<td class="ta-l">${method}</td><td>${nfe}</td>` +
+            `<td>${fmt(psnr, 2)}</td><td>${fmt(ssim, 4)}</td><td>${fmt(lpips, 4)}</td>` +
+            `<td>${fmt(fid, 2)}</td><td>${mmdPix}</td><td>${mmdInc}</td>` +
+            `<td>${fmt(crpsPix, 2)}</td><td>${fmt(crpsInc, 2)}</td></tr>`;
+        });
+      });
+      tb.innerHTML = html;
+    }
+    buildTable(IMAGENET, 'tbody-imagenet');
+    buildTable(FFHQ, 'tbody-ffhq');
+
+    // re-typeset math in the dynamically built tables once MathJax is ready
+    function typesetMath() {
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise(document.querySelectorAll('.comparison-table'));
+      } else {
+        setTimeout(typesetMath, 200);
+      }
+    }
+    typesetMath();
+
+    // table tab switching
+    document.querySelectorAll('.seg-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.seg-btn').forEach(b => {
+          const on = b === btn; b.classList.toggle('is-active', on); b.setAttribute('aria-selected', on);
+        });
+        document.querySelectorAll('[data-table]').forEach(t => {
+          t.classList.toggle('is-hidden', t.dataset.table !== tab);
+        });
+      });
+    });
+
+    // copy bibtex
+    document.getElementById('copy-bib').addEventListener('click', async () => {
+      const btn = document.getElementById('copy-bib');
+      try {
+        await navigator.clipboard.writeText(document.getElementById('bibtex').textContent);
+        btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy', 1600);
+      } catch (e) { btn.textContent = 'Copy failed'; }
+    });
+
+    // ---- lightbox (click any figure to enlarge) ----
+    const lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.innerHTML = '<img alt="enlarged figure"><div class="lightbox-hint">click anywhere or press Esc to close</div>';
+    document.body.appendChild(lb);
+    const lbImg = lb.querySelector('img');
+    document.querySelectorAll('.figure-hero img, .figure-clean img').forEach(img => {
+      img.addEventListener('click', () => { lbImg.src = img.currentSrc || img.src; lb.classList.add('open'); });
+    });
+    lb.addEventListener('click', () => lb.classList.remove('open'));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') lb.classList.remove('open'); });
+
+    // nav active-section highlight
+    const navLinks = [...document.querySelectorAll('.nav-links a')];
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const id = e.target.id;
+          navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+        }
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    document.querySelectorAll('main section[id]').forEach(s => obs.observe(s));
+  </script>
+</body>
+
+</html>
